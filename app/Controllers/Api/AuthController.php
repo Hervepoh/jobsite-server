@@ -168,133 +168,131 @@ class AuthController extends ResourceController
      */
     public function register()
     {
-        helper('\App\Helpers\Jwt');
+        try {
+            helper('\App\Helpers\Jwt');
 
-        $validation = service('validation');
-        /* The above code is setting validation rules for various input fields in a PHP application.
-       Each field has specific rules defined using the setRules method. Here are the rules for each
-       field: */
-        /* The above PHP code is setting validation rules for a form input fields using a validation
-       library or class. Each field in the form is being validated based on certain rules: */
-        $validation->setRules([
-            'name' => 'required|min_length[1]|max_length[200]|trim',
-            'surname' => 'required|min_length[1]|max_length[200]|trim',
-            'genre' => 'required|min_length[1]|max_length[1]|trim',
-            'phone' => 'required|min_length[1]|max_length[200]|trim',
-            'mail' => 'required|trim',
-            'user_pass' => 'required|min_length[8]|trim',
-            'confirm_user_pass' => 'required|min_length[8]|trim'
-        ]);
+            $validation = service('validation');
+            $validation->setRules([
+                'name' => 'required|min_length[1]|max_length[200]|trim',
+                'surname' => 'required|min_length[1]|max_length[200]|trim',
+                'genre' => 'required|min_length[1]|max_length[1]|trim',
+                'phone' => 'required|min_length[1]|max_length[200]|trim',
+                'mail' => 'required|trim',
+                'date_naissance' => 'required',
+                'user_pass' => 'required|min_length[8]|trim',
+                'confirm_user_pass' => 'required|min_length[8]|trim'
+            ]);
 
-        if (!$validation->withRequest($this->request)->run()) {
-            return $this->response->setJSON([
-                'errors' => $validation->getErrors()
-            ])->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST);
-        }
+            if (!$validation->withRequest($this->request)->run()) {
+                return $this->failValidationErrors($validation->getErrors());
+            }
 
-        $request = $this->request->getJSON(true);
+            $request = $this->request->getJSON(true);
 
-        $fonction = $request['activite'] ?? null;
-        $name =  $request['name'];
-        $surname =  $request['surname'];
-        $genre =  $request['genre'];
-        $phone = $request['phone'];
-        $phone2 = $request['phone2'] ?? null;
-        $code_phone = $request['codePays'] ?? null;
-        $code_phone2 = $request['codePays2'] ?? null;
-        $mail = strtolower(trim($request['mail'])) ?? null;
-        $userPass = $request['user_pass'] ?? null;
-        $confirmUserPass = $request['confirm_user_pass'] ?? null;
-        $paysOrigine = $request['paysOrigine'] ?? null;
-        $paysNaissance = $request['nationalite'] ?? null;
-        $departement_naisse = $request['departement_naisse'] ?? null;
-        $regionOrigine = $request['region_origine'] ?? null;
-        $arrondiOrigine = $request['arrondissement_origine'] ?? null;
-        $lieu = $request['lieu_naissance_use'] ?? null;
-        $vil = $request['lieu_naisse'] ?? null;
-        $jour = $request['jour'] ?? null;
-        $mois = $request['mois'] ?? null;
-        $annee = $request['annee'] ?? null;
+            $fonction = $request['activite'] ?? null;
+            $name =  $request['name'];
+            $surname =  $request['surname'];
+            $genre =  $request['genre'];
+            $phone = $request['phone'];
+            $phone2 = $request['phone2'] ?? null;
+            $code_phone = $request['codePays'] ?? null;
+            $code_phone2 = $request['codePays2'] ?? null;
+            $mail = strtolower(trim($request['mail'])) ?? null;
+            $userPass = $request['user_pass'] ?? null;
+            $confirmUserPass = $request['confirm_user_pass'] ?? null;
+            $paysOrigine = $request['paysOrigine'] ?? null;
+            $paysNaissance = $request['nationalite'] ?? null;
+            $departement_naisse = $request['departement_naisse'] ?? null;
+            $regionOrigine = $request['region_origine'] ?? null;
+            $arrondiOrigine = $request['arrondissement_origine'] ?? null;
+            $lieu = $request['lieu_naissance_use'] ?? null;
+            $vil = $request['lieu_naisse'] ?? null;
+            $dateNaissance = $request['date_naissance'] ?? null;
 
-        //Définition de la date
-        $anneeNaissance = $jour . '/' . $mois . '/' . $annee;
+            $datetime = \DateTime::createFromFormat('m/d/Y', $dateNaissance);
+            if ($datetime) {
+                $jour = $datetime->format('d'); // Jour (ex: 20)
+                $mois = $datetime->format('m'); // Mois (ex: 05)
+                $annee = $datetime->format('Y');
+            } else {
+                return $this->failValidationErrors($validation->getErrors());
+            }
 
-        $mon_age = date('Y') - $annee;
-        // Vérifie si l'utilisateur a l'age légal
-        if ($mon_age < 17) {
-            $data = lang('message.error_legacy_born');
-            return $this->failValidationErrors($data);
-        }
+            //Définition de la date
+            $anneeNaissance = $jour . '/' . $mois . '/' . $annee;
 
-        // Vérifie si l'addresse mail est au bon format
-        if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
-            $data = lang('message.error_mail');
-            return $this->failValidationErrors($data);
-        }
+            $mon_age = date('Y') - $annee;
+            // Vérifie si l'utilisateur a l'age légal
+            if ($mon_age < 17) {
+                $data = lang('message.error_legacy_born');
+                return $this->failValidationErrors($data);
+            }
 
-        if ($confirmUserPass != $userPass) {
-            $data = lang('message.error_pwd_dif');
-            return $this->failValidationErrors($data);
-        }
+            // Vérifie si l'addresse mail est au bon format
+            if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
+                $data = lang('message.error_mail');
+                return $this->failValidationErrors($data);
+            }
 
-        $mailCheck =  $this->userService->getUserByEmail($mail);
+            if ($confirmUserPass != $userPass) {
+                $data = lang('message.error_pwd_dif');
+                return $this->failValidationErrors($data);
+            }
 
-        if (isset($mailCheck) && !empty($mailCheck)) {
-            $data = lang('message.error_mail_use');
-            return $this->response->setJSON(json_encode($data));
-        }
+            $mailCheck =  $this->userService->getUserByEmail($mail);
 
-        $resultatComplexite = $this->model->complexite_password($confirmUserPass);
+            if (isset($mailCheck) && !empty($mailCheck)) {
+                return $this->failValidationErrors(lang('message.error_mail_use'));
+            }
 
-        if (is_numeric($resultatComplexite) && $resultatComplexite < 19) {
-            $data = lang('message.error_pwd_faible');
-            return $this->failValidationErrors($data);
-        }
+            $resultatComplexite = $this->model->complexite_password($confirmUserPass);
 
-        $passUse = $this->model->crypt_password($confirmUserPass);
+            if (is_numeric($resultatComplexite) && $resultatComplexite < 19) {
+                return $this->failValidationErrors(lang('message.error_pwd_faible'));
+            }
 
-        $adresse = array(
-            'adresse_mail' => $mail,
-            'telephone_1' => $code_phone . "-" . $phone,
-            'telephone_2' => $code_phone2 . "-" . $phone2
-        );
+            $passUse = $this->model->crypt_password($confirmUserPass);
 
-        $addressModel = new AddressModel();
-        $insertAdresse = $addressModel->insert($adresse, true);
+            $adresse = array(
+                'adresse_mail' => $mail,
+                'telephone_1' => $code_phone . "-" . $phone,
+                'telephone_2' => $code_phone2 . "-" . $phone2
+            );
 
-        if ($insertAdresse == null || $insertAdresse == 0) {
-            $data = lang('message.msg_info_rejet');
-            return $this->response->setJSON(json_encode($data));
-        }
+            $addressModel = new AddressModel();
+            $insertAdresse = $addressModel->insert($adresse, true);
 
-        // $img = $this->request->getFile('piece_media');
-        // $insertDocument = $this->fichier->upload($img);
-        //Eléments de sauvegarde de la personne
-        $personne = array(
-            'nom' => $name,
-            'prenom' => $surname,
-            'date_naissance' => $anneeNaissance,
-            'pays_origine' => $paysOrigine,
-            'pays_naissance' => $paysNaissance,
-            'lieu_naissance_use' => $lieu,
-            'region_origine' => $regionOrigine,
-            'departement_naissance' => $departement_naisse,
-            'arrondissement_origine' => $arrondiOrigine,
-            /*'region_naissance' => $regionNaissance, */
-            'ville' => $vil,
-            'fonction' => $fonction,
-            'genre' => $genre,
-            'adresse' => $insertAdresse,
-            //'image' => $insertDocument,
-            'date_create_personne' => time()
-        );
+            if ($insertAdresse == null || $insertAdresse == 0) {
+                return $this->failServerError(lang('message.msg_info_rejet'));
+            }
 
-        $insertPersonne = (new PersonModel())->insert($personne, true);
+            // $img = $this->request->getFile('piece_media');
+            // $insertDocument = $this->fichier->upload($img);
+            //Eléments de sauvegarde de la personne
+            $personne = array(
+                'nom' => $name,
+                'prenom' => $surname,
+                'date_naissance' => $anneeNaissance,
+                'pays_origine' => $paysOrigine,
+                'pays_naissance' => $paysNaissance,
+                'lieu_naissance_use' => $lieu,
+                'region_origine' => $regionOrigine,
+                'departement_naissance' => $departement_naisse,
+                'arrondissement_origine' => $arrondiOrigine,
+                /*'region_naissance' => $regionNaissance, */
+                'ville' => $vil,
+                'fonction' => $fonction,
+                'genre' => $genre,
+                'adresse' => $insertAdresse,
+                //'image' => $insertDocument,
+                'date_create_personne' => time()
+            );
 
-        if ($insertPersonne == null || $insertPersonne == 0) {
-            $data = lang('message.msg_info_rejet');
-            return $this->response->setJSON(json_encode($data));
-        } else {
+            $insertPersonne = (new PersonModel())->insert($personne, true);
+
+            if ($insertPersonne == null || $insertPersonne == 0) {
+                return $this->failServerError(lang('message.msg_info_rejet'));
+            }
 
             //Eléments de l'utilisateur
             $user = array(
@@ -307,26 +305,53 @@ class AuthController extends ResourceController
 
             try {
                 //Sauvegarde de la personne
-                $insertUser = (new UserModel())->save($user);
-                $email = $mail;
-                $nom = $name;
-                $prenom = $surname;
+                $insertUser = $this->userService->create($user);
 
-                //$this->sendMail->envoi_mail_compte_cree($email, $nom, $prenom);
-
-                $data = "done";
-                return $this->response->setJSON(json_encode($data));
+                //$this->sendMail->envoi_mail_compte_cree($mail, $name, $surname);
+                return $this->respondCreated([
+                    'message' => 'Successfully registered',
+                    'status' => 201,
+                    'data' => $insertUser
+                ]);
             } catch (Exception $e) {
-
                 $data = lang('message.error') . " : " . $e->getMessage();
                 return $this->response->setJSON(json_encode($data));
             }
+        } catch (Exception $e) {
+            return $this->failServerError($e);
         }
     }
 
 
     /**
-     * Create a new resource object, from "posted" parameters.
+     *
+     * @return ResponseInterface
+     */
+    public function verifyEmail()
+    {
+        $code = $this->request->getPost('code');
+
+        if (empty($code)) {
+            return $this->response->setJSON([
+                'error' => 'Code is required'
+            ])->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            //$this->authService->verifyEmail($code);
+
+            return $this->response->setJSON([
+                'message' => 'Email verified successfully'
+            ])->setStatusCode(ResponseInterface::HTTP_OK);
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'error' => $e->getMessage()
+            ])->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST);
+        }
+    }
+
+
+    /**
      *
      * @return ResponseInterface
      */
