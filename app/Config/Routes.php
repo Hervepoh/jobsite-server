@@ -2,8 +2,10 @@
 
 use CodeIgniter\Router\RouteCollection;
 use App\Controllers\Api\AuthController;
+use App\Controllers\Api\CvController;
 use App\Controllers\Api\OfferController;
 use App\Controllers\Api\SessionController;
+
 
 /**
  * @var RouteCollection $routes
@@ -40,6 +42,11 @@ $routes->group('/api/v1/', ['filter' => 'secureCORS'], static function (RouteCol
         $routes->post('offres/(:num)/apply',  [OfferController::class, 'apply']);
         // liste des offres de l'utilisateur connecté
         $routes->get('offres/me',  [OfferController::class, 'my']);
+
+        $routes->post('cv/langues',  [CvController::class, 'save_langue']);
+        $routes->put('cv/langues/(:num)',  [CvController::class, 'update_langue/$1']);
+        $routes->delete('cv/langues/(:num)',  [CvController::class, 'delete_langue/$1']);
+        $routes->get('cv/langues',  [CvController::class, 'getAll_langues/$1']);
 
     });
 });
