@@ -9,7 +9,7 @@ class UserModel extends Model
     protected $table            = 't_utilisateurs';
     protected $primaryKey       = 'id_utilisateur';
     protected $useAutoIncrement = true;
-    protected $returnType       = 'array';
+    protected $returnType       = 'object';
     protected $useSoftDeletes   = false;
     protected $protectFields    = false;
     protected $allowedFields    = [];

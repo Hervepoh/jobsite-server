@@ -62,6 +62,7 @@ class AuthController extends ResourceController
             $ipAddress = $this->request->getIPAddress();
 
             $user = $this->userService->getActiveUser($loginUser);
+
             if (!$user) {
                 log_message('warning', "Login failed for email: {$loginUser}");
                 return $this->failUnauthorized('Invalid email or password');
@@ -73,8 +74,8 @@ class AuthController extends ResourceController
             // }
 
             // Vérifier si 2FA est activé
-            if (!empty($user['enable2FA'])) {
-                log_message('info', "2FA required for user ID: {$user['id']}");
+            if (property_exists($user, 'enable2FA') && $user->enable2FA) {
+                log_message('info', "2FA required for user ID: {$user->id}");
                 return $this->response->setJSON([
                     'user' => null,
                     'mfaRequired' => true,
@@ -90,7 +91,7 @@ class AuthController extends ResourceController
             // Vérifier si une session active existe déjà pour cet utilisateur et cette IP
             $sessionModel = new SessionModel();
             $existingSession = $sessionModel
-                ->where('user_id', $user['id_utilisateur'])
+                ->where('user_id', $user->id_utilisateur)
                 ->where('ip_address', $ipAddress)
                 ->where('user_agent', $userAgent)
                 ->where('active', 1)
@@ -120,7 +121,7 @@ class AuthController extends ResourceController
 
             // Générer des tokens JWT
             $accessToken = generate_jwt([
-                'userId' => $user['id_utilisateur'],
+                'userId' => $user->id_utilisateur,
                 'sessionId' => $sessionId,
             ], $jwtAccessTokenExpires);
 
@@ -130,7 +131,7 @@ class AuthController extends ResourceController
 
             $created =  $sessionModel->insert([
                 'id' =>  $sessionId,
-                'user_id' => $user['id_utilisateur'],
+                'user_id' => $user->id_utilisateur,
                 'ip_address' => $ipAddress,
                 'user_agent' => $userAgent,
                 'refresh_token' => $refreshToken,
@@ -140,12 +141,12 @@ class AuthController extends ResourceController
             ], true);
 
             if (!$created) {
-                log_message('error', "Failed to create session for user ID: {$user['id_utilisateur']}");
+                log_message('error', "Failed to create session for user ID: {$user->id_utilisateur}");
                 return $this->failServerError('Failed to create session');
             }
 
-            log_message('info', "Login successful for user ID: {$user['id_utilisateur']}");
-            $this->userService->setLastConnexion($user['id_utilisateur']);
+            log_message('info', "Login successful for user ID: {$user->id_utilisateur}");
+            $this->userService->setLastConnexion($user->id_utilisateur);
 
             return $this->respondWithTokens(
                 $user,
@@ -413,7 +414,7 @@ class AuthController extends ResourceController
 
 
     // Méthode auxiliaire pour envoyer réponse + cookies
-    protected function respondWithTokens(array $user, string $accessToken, string $refreshToken, int $accessExpire, int $refreshExpire)
+    protected function respondWithTokens(array | object $user, string $accessToken, string $refreshToken, int $accessExpire, int $refreshExpire)
     {
         $isSecure = env('CI_ENVIRONMENT') === 'production';
 
@@ -436,7 +437,7 @@ class AuthController extends ResourceController
         ]);
 
         return $this->response->setJSON([
-            'user' => $this->userService->getUserById($user['id_utilisateur']),
+            'user' => $this->userService->getUserById($user->id_utilisateur),
             'accessToken' => $accessToken,
             'refreshToken' => $refreshToken,
             'mfaRequired' => false,
