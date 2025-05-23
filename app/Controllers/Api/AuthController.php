@@ -195,7 +195,7 @@ class AuthController extends ResourceController
             $surname =  $request['surname'];
             $genre =  $request['genre'];
             $phone = $request['phone'];
-            $phone2 = $request['phone2'] ?? null;
+            $phone2 = $request['workNumber'] ?? null;
             $code_phone = $request['codePays'] ?? null;
             $code_phone2 = $request['codePays2'] ?? null;
             $mail = strtolower(trim($request['mail'])) ?? null;
@@ -204,20 +204,21 @@ class AuthController extends ResourceController
             $paysOrigine = $request['paysOrigine'] ?? null;
             $paysNaissance = $request['nationalite'] ?? null;
             $departement_naisse = $request['departement_naisse'] ?? null;
-            $regionOrigine = $request['region_origine'] ?? null;
+            $regionOrigine = $request['regionOrigin'] ?? null;
             $arrondiOrigine = $request['arrondissement_origine'] ?? null;
             $lieu = $request['lieu_naissance_use'] ?? null;
-            $vil = $request['lieu_naisse'] ?? null;
+            $vil = $request['ville'] ?? null;
             $dateNaissance = $request['date_naissance'] ?? null;
 
-            $datetime = \DateTime::createFromFormat('m/d/Y', $dateNaissance);
+            $datetime = \DateTime::createFromFormat('Y-m-d', $dateNaissance);
             if ($datetime) {
                 $jour = $datetime->format('d'); // Jour (ex: 20)
                 $mois = $datetime->format('m'); // Mois (ex: 05)
                 $annee = $datetime->format('Y');
             } else {
-                return $this->failValidationErrors($validation->getErrors());
+                return $this->failValidationErrors("Invalide date format");
             }
+     
 
             //Définition de la date
             $anneeNaissance = $jour . '/' . $mois . '/' . $annee;

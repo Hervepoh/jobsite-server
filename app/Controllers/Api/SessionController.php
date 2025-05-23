@@ -5,6 +5,7 @@ namespace App\Controllers\Api;
 use App\Models\SessionModel;
 use App\Models\UserModel;
 use App\Services\SessionService;
+use App\Services\UserService;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use stdClass;
@@ -58,6 +59,7 @@ class SessionController extends ResourceController
     public function getSession()
     {
         $sessionId = $this->request->sessionId ?? null;
+        $userId = $this->request->userId ?? null;
 
         if (!$sessionId) {
             return $this->failNotFound('Session ID not found. Please log in.');
@@ -71,7 +73,10 @@ class SessionController extends ResourceController
 
         return $this->respond([
             'message' => 'Session retrieved successfully',
-            'session' => $session,
+            'session' => [
+                'session' => $session,
+                'user' => (new UserService())->getUserById($userId)
+            ],
         ]);
     }
 
