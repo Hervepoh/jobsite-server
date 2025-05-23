@@ -6,13 +6,14 @@ use App\Models\SessionModel;
 
 class SessionService
 {
-    public function getAllSessions(string $userId): array
+    public function getAllSessions(string $userId): array | object
     {
         $model = new SessionModel();
 
         return $model
             ->where('user_id', $userId)
-            ->orderBy('created_at', 'DESC')
+            ->where('active', 1)
+            ->orderBy('timestamp', 'DESC')
             ->findAll();
     }
 
@@ -22,9 +23,11 @@ class SessionService
         $sessionModel = new SessionModel();
 
         return $sessionModel
-            ->select('sessions.*, users.*')
-            ->join('users', 'users.id = sessions.user_id')
-            ->where('sessions.id', $sessionId)
+           // ->select('t_sessions.*, t_utilisateurs.*')
+            ->select('t_sessions.*')
+            ->join('t_utilisateurs', 't_utilisateurs.id_utilisateur = t_sessions.user_id')
+            ->where('t_sessions.id', $sessionId)
+            ->where('t_sessions.active', 1)
             ->first();
     }
 
@@ -43,6 +46,6 @@ class SessionService
             return false;
         }
 
-        return $model->delete($sessionId);
+        return $model->update($session->id,["active"=>0]);
     }
 }

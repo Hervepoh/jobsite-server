@@ -67,6 +67,7 @@ database.default.port = 1000
 session.driver = 'CodeIgniter\Session\Handlers\DatabaseHandler'
 session.savePath = 't_sessions'
 session.cookieName = 'jobsite'
+session.apiName = 'jobsite-api'
 
 #--------------------------------------------------------------------
 # LOGGER

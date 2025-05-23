@@ -33,6 +33,7 @@ $routes->group('/api/v1/', ['filter' => 'secureCORS'], static function (RouteCol
         $routes->post('auth/logout', [AuthController::class, 'logout']);
         // Gestion des sessions de connection
         $routes->get('session', [SessionController::class, 'getSession']);
+        $routes->get('session/all', [SessionController::class, 'getAllSessions']);
         $routes->delete('session/(:segment)',  [SessionController::class, 'deleteSession/$1']);
 
         // Utilisateur connecté peut postuler à une offre

@@ -28,14 +28,14 @@ class SessionController extends ResourceController
     public function getAllSessions(): ResponseInterface
     {
         $userId = $this->request->userId ?? null;
-        $currentSessionId = $this->request->userSessionId ?? null;
+        $currentSessionId = $this->request->sessionId ?? null;
 
-        if (!$userId) {
+        if (!$userId || !$currentSessionId) {
             return $this->failUnauthorized('User not authenticated.');
         }
 
         $sessions = $this->sessionService->getAllSessions($userId);
-
+ 
         $modifiedSessions = array_map(function ($session) use ($currentSessionId) {
             return array_merge(
                 (array) $session,
@@ -63,19 +63,15 @@ class SessionController extends ResourceController
             return $this->failNotFound('Session ID not found. Please log in.');
         }
 
-        $session = new stdClass(); // TODO: fixer la session
-        $session->user = new stdClass();
-        $session->user->name = 'Herve';
-        $session->user->email = 'epohherve63@gmail.com';
-        // $session = $this->sessionService->getSessionById($sessionId);
-
-        // if (!$session || !$session->user) {
-        //     return $this->failNotFound('Session not found or user does not exist.');
-        // }
+        $session = $this->sessionService->getSessionById($sessionId);
+     
+        if (!$session) {
+            return $this->failNotFound('Server Session is not active , Please login and try again ');
+        }
 
         return $this->respond([
             'message' => 'Session retrieved successfully',
-            'user' => $session->user,
+            'session' => $session,
         ]);
     }
 
