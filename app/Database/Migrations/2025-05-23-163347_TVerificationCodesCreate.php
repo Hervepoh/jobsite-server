@@ -16,7 +16,6 @@ class TVerificationCodesCreate extends Migration
             ],
             'user_id'     => [
                 'type'       => 'INT',
-                'unsigned'   => true,
                 'null'       => false,
             ],
             'code'        => [
@@ -44,12 +43,12 @@ class TVerificationCodesCreate extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->addForeignKey('id_utilisateur', 't_utilisateurs', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->createTable('verification_codes');
+        $this->forge->addForeignKey('user_id', 't_utilisateurs', 'id_utilisateur', 'CASCADE', 'CASCADE');
+        $this->forge->createTable('t_verification_codes');
     }
 
     public function down()
     {
-        $this->forge->dropTable('verification_codes');
+        $this->forge->dropTable('t_verification_codes');
     }
 }

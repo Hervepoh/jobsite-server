@@ -14,34 +14,35 @@
 # ENVIRONMENT
 #--------------------------------------------------------------------
 
-# CI_ENVIRONMENT = production
-CI_ENVIRONMENT = development
+CI_ENVIRONMENT = production
 
 #--------------------------------------------------------------------
 # APP
 #--------------------------------------------------------------------
 
-app.baseURL = 'http://localhost:8080'
+app.baseURL =
 # If you have trouble with `.`, you could also use `_`.
 # app_baseURL = ''
 # app.forceGlobalSecureRequests = false
 # app.CSPEnabled = false
 
-allowedOrigins = 'http://localhost:3000'
-JWT_SECRET = 'jwt_clé_secrète'
-JWT_ACCESS_TOKEN_EXPIRES=3600
-JWT_REFRESH_TOKEN_EXPIRES=604800
+allowedOrigins = 
+JWT_SECRET = 
+JWT_ACCESS_TOKEN_EXPIRES = 
+JWT_REFRESH_TOKEN_EXPIRES = 
+ACTIVATION_TOKEN_EXPIRES = 
+
 #--------------------------------------------------------------------
 # DATABASE
 #--------------------------------------------------------------------
 
-database.default.hostname = localhost
-database.default.database = jobsite
-database.default.username = root
-database.default.password = password
-database.default.DBDriver = MySQLi
+database.default.hostname = 
+database.default.database = 
+database.default.username = 
+database.default.password = 
+database.default.DBDriver =
 database.default.DBPrefix =
-database.default.port = 1000
+database.default.port =
 
 # If you use MySQLi as tests, first update the values of Config\Database::$tests.
 # database.tests.hostname = localhost
@@ -64,13 +65,26 @@ database.default.port = 1000
 # SESSION
 #--------------------------------------------------------------------
 
-session.driver = 'CodeIgniter\Session\Handlers\DatabaseHandler'
-session.savePath = 't_sessions'
-session.cookieName = 'jobsite'
-session.apiName = 'jobsite-api'
+session.driver = 
+session.savePath = 
+session.cookieName = 
+session.apiName = 
 
 #--------------------------------------------------------------------
 # LOGGER
 #--------------------------------------------------------------------
 
 # logger.threshold = 4
+
+#--------------------------------------------------------------------
+# SMTP
+#--------------------------------------------------------------------
+
+mail.protocol = 
+mail.host = 
+mail.user = 
+mail.pass = 
+mail.port =
+mail.crypto = 
+mail.type = 
+mail.charset =

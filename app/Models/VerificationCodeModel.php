@@ -8,7 +8,7 @@ class VerificationCodeModel extends Model
 {
     protected $table      = 't_verification_codes';
     protected $primaryKey = 'id';
-    protected $returnType = 'array';
+    protected $returnType = 'object';
     protected $allowedFields = [
         'user_id',
         'code',

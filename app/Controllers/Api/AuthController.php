@@ -8,8 +8,8 @@ use App\Models\InfoMailModel;
 use App\Models\PersonModel;
 use App\Models\SessionModel;
 use App\Models\UploadModel;
-use App\Models\UserModel;
 use App\Services\AuthService;
+use App\Services\MailService;
 use App\Services\SessionService;
 use App\Services\UserService;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -309,7 +309,13 @@ class AuthController extends ResourceController
                 //Sauvegarde de la personne
                 $insertUser = $this->userService->create($user);
 
-                //$this->sendMail->envoi_mail_compte_cree($mail, $name, $surname);
+                // Génération du code d'activation
+                $code = (new AuthService())->createVerification($insertUser->id_utilisateur);
+ 
+                // Envoyé le mail d'activation
+                (new MailService())->create_account($mail, $name, $surname , $code->code);
+                //$this->sendMail->envoi_mail_compte_cree($mail, $name, $surname , $code->code);
+
                 return $this->respondCreated([
                     'message' => 'Successfully registered',
                     'status' => 201,
@@ -329,26 +335,15 @@ class AuthController extends ResourceController
      *
      * @return ResponseInterface
      */
-    public function verifyEmail(): ResponseInterface
+    public function verifyEmail(string $code): ResponseInterface
     {
-        $validation = service('validation');
-        $validation->setRules([
-            'code' => 'required',
-        ]);
-
-        if (!$validation->withRequest($this->request)->run()) {
-            return $this->failValidationErrors($validation->getErrors());
+        if (!$code) {
+            return $this->failValidationErrors('Code not provided or invalid');
         }
-
-        $request = $this->request->getJSON(true);
-        $code = $request['code'];
-
         try {
-            (new AuthService())->verifyEmail($code);
-            return $this->respond([
-                'message' => 'Email verified successfully',
-                'status' => 201,
-            ]);
+            $status = (new AuthService())->verifyEmail($code);
+            $active = $status ? '?activation=success' : '?activation=error';
+            return redirect()->to(env('allowedOrigins','http://localhost:3000').$active);
         } catch (\Exception $e) {
              return $this->failServerError($e);
         }
@@ -385,7 +380,7 @@ class AuthController extends ResourceController
         }
 
         try {
-            $this->sendMail->envoi_mail_reset_pass($mail, $message);
+            // $this->sendMail->envoi_mail_reset_pass($mail, $message);
             return $this->respond(lang('message.msg_succes_pwd_reset'));
         } catch (Exception $e) {
             $data = lang('message.error') . " : " . $e->getMessage();
@@ -418,8 +413,6 @@ class AuthController extends ResourceController
 
         //On vérifie que cette adresse existe
         $mailCheck = $this->userService->getUserByEmail($mail);
-        var_dump($mailCheck);
-        die();
 
         if ($mailCheck == null) {
             $data = lang('message.error_mail_unknow');
@@ -439,7 +432,7 @@ class AuthController extends ResourceController
 
             //Sauvegarde de la personne
             $key = array('utilisateur' => $mail);
-            $updateUser = $this->model->update_data($this->$tuser, $user, $key);
+            $updateUser = $this->model->update_data('t_utilisateurs', $user, $key);
 
             //Envoie du mail
             $email = $mail;

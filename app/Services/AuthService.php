@@ -1,4 +1,4 @@
-<?
+<?php
 namespace App\Services;
 
 use App\Models\VerificationCodeModel;
@@ -32,5 +32,25 @@ class AuthService
         }
 
         $verificationModel->delete($validCode['id']);
+    }
+
+    public function createVerification($userId)
+    {
+
+        $verificationModel = new VerificationCodeModel();
+        
+        $data = [
+            'user_id' => $userId,
+            'code' =>  bin2hex(random_bytes(32)),
+            'type' => 'EMAIL_VERIFICATION',
+            'expires_at' => date('Y-m-d H:i:s', strtotime('+'. env('ACTIVATION_TOKEN_EXPIRES' , 3).' hour'))         // Set default expiration time to 3 hours
+        ];
+
+        $verificationId = $verificationModel->insert($data, true);
+        if (!$verificationId) {
+            throw new Exception("Unable to create verification code");
+        }
+        
+        return $verificationModel->find($verificationId);
     }
 }
