@@ -22,6 +22,9 @@ $routes->group('/api/v1/', ['filter' => 'secureCORS'], static function (RouteCol
     // Routes publiques
     $routes->post('auth/register', [AuthController::class, 'register']);
     $routes->post('auth/login',  [AuthController::class, 'login']);
+    $routes->post('auth/verify/email',  [AuthController::class, 'verifyEmail']);
+    $routes->post('auth/password/forgot',  [AuthController::class, 'passwordForgot']);
+    $routes->post('auth/password/reset',  [AuthController::class, 'passwordReset']);
     $routes->get('auth/refresh',  [AuthController::class, 'refresh']);
 
     $routes->get('offres',  [OfferController::class, 'index']);
@@ -48,5 +51,29 @@ $routes->group('/api/v1/', ['filter' => 'secureCORS'], static function (RouteCol
         $routes->delete('cv/langues/(:num)',  [CvController::class, 'delete_langue/$1']);
         $routes->get('cv/langues',  [CvController::class, 'getAll_langues/$1']);
 
+        $routes->post('cv/cursus',  [CvController::class, 'save_cursus']);
+        $routes->put('cv/cursus/(:num)',  [CvController::class, 'update_cursus/$1']);
+        $routes->delete('cv/cursus/(:num)',  [CvController::class, 'delete_cursus/$1']);
+        $routes->get('cv/cursus',  [CvController::class, 'getAll_cursus/$1']);
+
+        $routes->post('cv/formations',  [CvController::class, 'save_formation']);
+        $routes->put('cv/formations/(:num)',  [CvController::class, 'update_formation/$1']);
+        $routes->delete('cv/formations/(:num)',  [CvController::class, 'delete_formation/$1']);
+        $routes->get('cv/formations',  [CvController::class, 'getAll_Formations/$1']);
+
+        $routes->post('cv/associations',  [CvController::class, 'save_association']);
+        $routes->put('cv/associations/(:num)',  [CvController::class, 'update_association/$1']);
+        $routes->delete('cv/associations/(:num)',  [CvController::class, 'delete_association/$1']);
+        $routes->get('cv/associations',  [CvController::class, 'getAll_associations/$1']);
+
+        $routes->post('cv/attestations',  [CvController::class, 'save_attestation']);
+        $routes->put('cv/attestations/(:num)',  [CvController::class, 'update_attestation/$1']);
+        $routes->delete('cv/attestations/(:num)',  [CvController::class, 'delete_attestation/$1']);
+        $routes->get('cv/attestations',  [CvController::class, 'getAll_attestations/$1']);
+
+        $routes->post('cv/competences',  [CvController::class, 'save_competence']);
+        $routes->put('cv/competences/(:num)',  [CvController::class, 'update_competence/$1']);
+        $routes->delete('cv/competences/(:num)',  [CvController::class, 'delete_competence/$1']);
+        $routes->get('cv/competences',  [CvController::class, 'getAll_competences/$1']);
     });
 });

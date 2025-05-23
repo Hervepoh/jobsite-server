@@ -116,7 +116,7 @@ class InfoMailModel extends Model
         //Chargement de paramètres d'envoie de mail
         $this->config_mail();
 
-        $contenu = "Votre mot de passe a été réinitialisé avec succès, voici votre nouveau mot de passe : ".$message;
+        $contenu = $message;
 
         //Mail
         $this->email->setFrom("noreplyrecruitment@camlight.cm", "Eneo Cameroon S.A. : Job-site");//$destinataire_mail, $nom." ".$prenom);

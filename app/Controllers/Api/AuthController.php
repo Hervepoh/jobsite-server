@@ -9,6 +9,7 @@ use App\Models\PersonModel;
 use App\Models\SessionModel;
 use App\Models\UploadModel;
 use App\Models\UserModel;
+use App\Services\AuthService;
 use App\Services\SessionService;
 use App\Services\UserService;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -282,7 +283,7 @@ class AuthController extends ResourceController
                 /*'region_naissance' => $regionNaissance, */
                 'ville' => $vil,
                 'fonction' => $fonction,
-                'genre' => $genre,
+                'genre' => $genre == 'm' ? 1 : 2,
                 'adresse' => $insertAdresse,
                 //'image' => $insertDocument,
                 'date_create_personne' => time()
@@ -327,29 +328,131 @@ class AuthController extends ResourceController
      *
      * @return ResponseInterface
      */
-    public function verifyEmail()
+    public function verifyEmail(): ResponseInterface
     {
-        $code = $this->request->getPost('code');
+        $validation = service('validation');
+        $validation->setRules([
+            'code' => 'required',
+        ]);
 
-        if (empty($code)) {
-            return $this->response->setJSON([
-                'error' => 'Code is required'
-            ])->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST);
+        if (!$validation->withRequest($this->request)->run()) {
+            return $this->failValidationErrors($validation->getErrors());
         }
 
-        try {
-            //$this->authService->verifyEmail($code);
+        $request = $this->request->getJSON(true);
+        $code = $request['code'];
 
-            return $this->response->setJSON([
-                'message' => 'Email verified successfully'
-            ])->setStatusCode(ResponseInterface::HTTP_OK);
+        try {
+            (new AuthService())->verifyEmail($code);
+            return $this->respond([
+                'message' => 'Email verified successfully',
+                'status' => 201,
+            ]);
         } catch (\Exception $e) {
-            return $this->response->setJSON([
-                'error' => $e->getMessage()
-            ])->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST);
+             return $this->failServerError($e);
         }
     }
 
+
+    /**
+     *
+     * @return ResponseInterface
+     */
+    public function passwordForgot(): ResponseInterface
+    {
+        $validation = service('validation');
+        $validation->setRules([
+            'email' => 'required|min_length[10]|valid_email',
+        ]);
+
+        if (!$validation->withRequest($this->request)->run()) {
+            return $this->failValidationErrors($validation->getErrors());
+        }
+
+        $request = $this->request->getJSON(true);
+        $mail = $request['email'];
+
+        // Vérifie si l'addresse mail est au bon format
+        if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
+            return $this->failValidationErrors(lang('message.error_mail'));
+        }
+
+        //On vérifie que cette adresse existe
+        $mailCheck = $this->userService->getUserByEmail($mail);
+        if (!$mailCheck) {
+            return $this->failValidationErrors(lang('message.error_mail_unknow'));
+        }
+
+        try {
+            $this->sendMail->envoi_mail_reset_pass($mail, $message);
+            return $this->respond(lang('message.msg_succes_pwd_reset'));
+        } catch (Exception $e) {
+            $data = lang('message.error') . " : " . $e->getMessage();
+            return $this->response->setJSON(json_encode($data));
+        }
+    }
+
+    /**
+     *
+     * @return ResponseInterface
+     */
+    public function passwordReset(): ResponseInterface
+    {
+        $validation = service('validation');
+        $validation->setRules([
+            'email' => 'required|min_length[10]|valid_email',
+        ]);
+
+        if (!$validation->withRequest($this->request)->run()) {
+            return $this->failValidationErrors($validation->getErrors());
+        }
+
+        $request = $this->request->getJSON(true);
+        $mail = $request['email'];
+
+        // Vérifie si l'addresse mail est au bon format
+        if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
+            return $this->failValidationErrors(lang('message.error_mail'));
+        }
+
+        //On vérifie que cette adresse existe
+        $mailCheck = $this->userService->getUserByEmail($mail);
+        var_dump($mailCheck);
+        die();
+
+        if ($mailCheck == null) {
+            $data = lang('message.error_mail_unknow');
+            return $this->response->setJSON(json_encode($data));
+        }
+
+        //Mot de passe haché sauvegardé dans la base de données
+        $passUserSave = $mailCheck[0]->passe;
+
+        //Cryptage du mot de passe
+        $newpasse = 'Pass@' . time() . '#';
+        $passUse = $this->model->crypt_password($newpasse);
+
+        try {
+            //Eléments de l'utilisateur
+            $user = array("passe" => $passUse);
+
+            //Sauvegarde de la personne
+            $key = array('utilisateur' => $mail);
+            $updateUser = $this->model->update_data($this->$tuser, $user, $key);
+
+            //Envoie du mail
+            $email = $mail;
+            $message = $newpasse;
+            //$this->sendMail->envoi_mail_reset_pass($email, $message);
+
+            $data = lang('message.msg_succes_pwd_reset');
+            return $this->response->setJSON(json_encode($data));
+        } catch (Exception $e) {
+
+            $data = lang('message.error') . " : " . $e->getMessage();
+            return $this->response->setJSON(json_encode($data));
+        }
+    }
 
     /**
      *
