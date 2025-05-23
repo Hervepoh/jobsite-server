@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\OffreModel;
+use App\Models\OffreSouscriptionModel;
 use App\Models\OffreVModel;
 use App\Models\SessionModel;
 use App\Models\UserExternModel;
@@ -108,5 +109,25 @@ class OffreService
         }
         // On failure, return an empty array or handle error as needed
         return [];
+    }
+
+     /**
+     * Souscription à une offre dans `t_souscription_offres`.
+     */
+    public function souscription(array $data = []): array | object | null
+    {
+        $model = new OffreSouscriptionModel();
+        $result = $model->save($data);
+        if ($result) {
+            // Assuming the primary key is 'id'
+            $id = $model->insertID ?? null;
+            if ($id) {
+                return $model->find($id);
+            }
+            // If insertID is not available, return the data as is
+            return $data;
+        }
+        // On failure, return an empty array or handle error as needed
+        return null;
     }
 }

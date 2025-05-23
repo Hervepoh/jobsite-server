@@ -21,9 +21,6 @@ class OfferController extends ResourceController
         $this->sendMail = new InfoMailModel();
     }
 
-
-
-
     /**
      *
      * @return ResponseInterface
@@ -117,21 +114,30 @@ class OfferController extends ResourceController
      */
     public function apply($id = null): ResponseInterface
     {
+        $userId = $this->request->userId ?? null;
+        if (!$userId) {
+            return $this->failUnauthorized(lang('message.msg_user_not_connected'));
+        }
+
         if (!$id) {
             return $this->failForbidden(lang('message.msg_requete_none'));
         }
-        $userId = $this->request->userId ?? null;
+
 
         $offre_a_souscrire = $this->offreService->getById($id, [
             "statut_offre" => '1'
         ]);
+        if (!$offre_a_souscrire) {
+            return $this->failNotFound(lang('message.offre_non_dispo'));
+        }
 
+        // Vérification de la date de fin de l'offre
         $ceJour = strtotime(date("m/d/Y"));
         $endDataEmploi = strtotime($offre_a_souscrire['date_fin_valide']);
-        // if ($endDataEmploi < $ceJour)
-        // {
-        //     return $this->failForbidden(lang('message.offre_non_dispo'));
-        // }
+        if ($endDataEmploi < $ceJour)
+        {
+            return $this->failForbidden(lang('message.offre_non_dispo'));
+        }
 
 
         $data = $this->offreService->getBy([
@@ -145,45 +151,53 @@ class OfferController extends ResourceController
         }
 
         //Eléments de sauvegarde de la souscription
-        $souscri = array(
+        $souscription = array(
             'offre' => $id,
             'date_souscription' => time(),
             'utilisateur_souscripteur' => $userId
         );
 
         try {
-            $insertSouscription = $this->model->insert_data($this->souscription, $souscri);
+            $insertSouscription = $this->offreService->souscription($souscription);
+            if (!$insertSouscription) {
+                return $this->fail(lang('message.msg_souscription_error'));
+            }
 
             $souscriUser =  $this->offreService->getBy([
                 'offre' => $id,
                 'utilisateur_souscripteur' =>  $userId
             ], 'v_offres_souscrite');
 
-            $titre = $souscriUser[0]->titre_offre;
-            $code = $souscriUser[0]->code_offre;
+            if (!$souscriUser) {
+                return $this->fail(lang('message.msg_souscription_error'));
+            }
+            $titre = $souscriUser[0]['titre_offre'];
+            $code = $souscriUser[0]['code_offre'];
 
-            //Mail d'information
-            $user= (new UserModel())->select('utilisateur')->where('id_utilisateur',$userId)->first();
-            $mail_info = $user->utilisateur;
-            $objet_message_info = lang('message.mail_objet_souscription') . $titre . " (Ref : " . $code . ")";
-            $message_info = lang('message.mail_souscription_offre');
-            $this->sendMail->envoi_mail_postule($mail_info, $message_info, $objet_message_info);
+            // TODO  Mail d'information
+            // $user = (new UserModel())->where('id_utilisateur', $userId)->first();
+            // $mail_info = $user['utilisateur'];
+            // $objet_message_info = lang('message.mail_objet_souscription') . $titre . " (Ref : " . $code . ")";
+            // $message_info = lang('message.mail_souscription_offre');
+            // $this->sendMail->envoi_mail_postule($mail_info, $message_info, $objet_message_info);
 
-            //Méssage de retour
-            $data = lang('message.msg_souscription_done');
-            return $this->respond([
-                'message' => '',
-                'status' => 200,
-                'data' => $this->offreService->getById($id)
+            return $this->respondCreated([
+                'message' =>  lang('message.msg_souscription_done'),
+                'data' => $this->offreService->getBy([
+                    'utilisateur_souscripteur' =>  $userId
+                ], 'v_offres_souscrite')
             ], 200);
         } catch (\Exception $e) {
-            $data = lang('message.error') . " : " . $e->getMessage();
-            return $this->response->setJSON(json_encode($data));
+            return $this->fail([
+                'message' => lang('message.error') . " : " . $e->getMessage(),
+                'status' => 500,
+                'error' => []
+            ], 500);
         }
     }
 
 
-     /**
+    /**
      *
      * @param int|string|null $id
      *
