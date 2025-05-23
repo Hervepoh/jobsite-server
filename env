@@ -15,28 +15,33 @@
 #--------------------------------------------------------------------
 
 # CI_ENVIRONMENT = production
+CI_ENVIRONMENT = development
 
 #--------------------------------------------------------------------
 # APP
 #--------------------------------------------------------------------
 
-# app.baseURL = ''
+app.baseURL = 'http://localhost:8080'
 # If you have trouble with `.`, you could also use `_`.
 # app_baseURL = ''
 # app.forceGlobalSecureRequests = false
 # app.CSPEnabled = false
 
+allowedOrigins = 'http://localhost:3000'
+JWT_SECRET = 'jwt_clé_secrète'
+JWT_ACCESS_TOKEN_EXPIRES=3600
+JWT_REFRESH_TOKEN_EXPIRES=604800
 #--------------------------------------------------------------------
 # DATABASE
 #--------------------------------------------------------------------
 
-# database.default.hostname = localhost
-# database.default.database = ci4
-# database.default.username = root
-# database.default.password = root
-# database.default.DBDriver = MySQLi
-# database.default.DBPrefix =
-# database.default.port = 3306
+database.default.hostname = localhost
+database.default.database = jobsite
+database.default.username = root
+database.default.password = password
+database.default.DBDriver = MySQLi
+database.default.DBPrefix =
+database.default.port = 1000
 
 # If you use MySQLi as tests, first update the values of Config\Database::$tests.
 # database.tests.hostname = localhost
@@ -59,8 +64,9 @@
 # SESSION
 #--------------------------------------------------------------------
 
-# session.driver = 'CodeIgniter\Session\Handlers\FileHandler'
-# session.savePath = null
+session.driver = 'CodeIgniter\Session\Handlers\DatabaseHandler'
+session.savePath = 't_sessions'
+session.cookieName = 'jobsite'
 
 #--------------------------------------------------------------------
 # LOGGER
